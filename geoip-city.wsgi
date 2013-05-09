@@ -42,6 +42,7 @@ def get_client_ip(environ, request):
 def application(environ, start_response):
     request = WSGIRequest(environ)
     response = WSGIResponse()
+    code = 500
 
     try:
         client_ip = get_client_ip(environ, request)
