@@ -5,7 +5,7 @@
 # Licensed under the MIT/X11 license
 
 # Environment Variables setable via Apache SetEnv directive:
-# mirrorlist_client.noreverseproxy
+# geoip_city.noreverseproxy
 #  if set (to anything), do not look at X-Forwarded-For headers.  This
 #  is used in environments that do not have a Reverse Proxy (HTTP
 #  accelerator) in front of the application server running this WSGI,
@@ -32,11 +32,12 @@ def get_client_ip(environ, request):
 
     if 'ip' in request_data:
         client_ip = strip(request_data['ip'])
-    elif 'X-Forwarded-For' in request.headers and 'mirrorlist_client.noreverseproxy' not in environ:
+    elif 'X-Forwarded-For' in request.headers and 'geoip_city.noreverseproxy' not in environ:
         client_ip = real_client_ip(strip(request.headers['X-Forwarded-For']))
     else:
         client_ip = request.environ['REMOTE_ADDR']
-        client_ip = unicode(client_ip, 'utf8', 'replace')
+
+    client_ip = unicode(client_ip, 'utf8', 'replace')
     return client_ip
 
 def application(environ, start_response):
