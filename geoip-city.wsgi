@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 20013 Dell, Inc.
+# Copyright (c) 2013 Dell, Inc.
 #  by Matt Domsch <Matt_Domsch@dell.com>
 # Licensed under the MIT/X11 license
 
@@ -18,6 +18,7 @@ import json
 
 global gi
 gi = GeoIP.open("/usr/share/GeoIP/GeoLiteCity.dat", GeoIP.GEOIP_STANDARD)
+gi.set_charset(GeoIP.GEOIP_CHARSET_UTF8)
 
 
 def real_client_ip(xforwardedfor):
@@ -59,7 +60,6 @@ def application(environ, start_response):
         return response(environ, start_response)
 
     results = json.dumps(results)
-    results = results.encode('utf-8')
     response.headers['Content-Length'] = str(len(results))
     response.write(results)
     return response(environ, start_response)
