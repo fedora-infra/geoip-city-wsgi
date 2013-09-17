@@ -59,6 +59,7 @@ def application(environ, start_response):
         response.status_code=code
         return response(environ, start_response)
 
+    results['ip'] = client_ip
     results = json.dumps(results)
     response.headers['Content-Length'] = str(len(results))
     response.write(results)
