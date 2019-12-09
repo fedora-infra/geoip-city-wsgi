@@ -13,12 +13,13 @@
 
 from string import zfill, atoi, strip, replace
 from paste.wsgiwrappers import *
-import GeoIP
+from iso3166 import countries
+import geoip2.database
+import geoip2.errors
 import json
 
 global gi
-gi = GeoIP.open("/usr/share/GeoIP/GeoLiteCity.dat", GeoIP.GEOIP_STANDARD)
-gi.set_charset(GeoIP.GEOIP_CHARSET_UTF8)
+gi = geoip2.database.Reader("/usr/share/GeoIP/GeoLite2-City.mmdb")
 
 
 def real_client_ip(xforwardedfor):
@@ -44,6 +45,7 @@ def get_client_ip(environ, request):
 def application(environ, start_response):
     request = WSGIRequest(environ)
     response = WSGIResponse()
+    results = {}
     code = 500
 
     try:
@@ -51,15 +53,39 @@ def application(environ, start_response):
         if client_ip is None:
             code = 400
             raise Exception
-        results =  gi.record_by_addr(client_ip)
-        if results is None:
+        data = gi.city(client_ip)
+        if data is None:
             code = 404
             raise Exception
+    except geoip2.errors.AddressNotFoundError:
+        response.status_code = 404
+        return response(environ, start_response)
     except: 
         response.status_code=code
         return response(environ, start_response)
 
     results['ip'] = client_ip
+
+    # map geoip2 data to a structure that matches the prior geoip format
+    results['city']         = data.city.name
+    results['region_name']  = data.subdivisions.most_specific.name
+    results['region']       = data.subdivisions.most_specific.iso_code
+    results['postal_code']  = data.postal.code
+    results['country_name'] = data.country.name
+    results['country_code'] = data.country.iso_code
+    results['time_zone']    = data.location.time_zone
+    results['latitude']     = data.location.latitude
+    results['longitude']    = data.location.longitude
+    results['metro_code']   = data.location.metro_code
+    results['dma_code']     = data.location.metro_code
+
+    # geoip2 no longer includes country_code3, so it has to be pulled
+    # from iso3166.countries
+    if data.country.iso_code in countries:
+        results['country_code3'] = countries[data.country.iso_code].alpha3
+    else:
+        results['country_code3'] = None
+
     results = json.dumps(results)
     response.headers['Content-Length'] = str(len(results))
     response.write(results)
