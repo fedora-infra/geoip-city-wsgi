@@ -11,7 +11,6 @@
 #  accelerator) in front of the application server running this WSGI,
 #  to avoid looking "behind" the real client's own forward HTTP proxy.
 
-from string import zfill, atoi, strip, replace
 from paste.wsgiwrappers import *
 from iso3166 import countries
 import geoip2.database
@@ -33,13 +32,12 @@ def get_client_ip(environ, request):
     request_data = request.GET
 
     if 'ip' in request_data:
-        client_ip = strip(request_data['ip'])
+        client_ip = request_data['ip'].strip()
     elif 'X-Forwarded-For' in request.headers and 'geoip_city.noreverseproxy' not in environ:
-        client_ip = real_client_ip(strip(request.headers['X-Forwarded-For']))
+        client_ip = real_client_ip(request.headers['X-Forwarded-For'].strip())
     else:
         client_ip = request.environ['REMOTE_ADDR']
 
-    client_ip = unicode(client_ip, 'utf8', 'replace')
     return client_ip
 
 def application(environ, start_response):
